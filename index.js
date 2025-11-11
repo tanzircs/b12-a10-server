@@ -10,4 +10,12 @@ app.use(express.json());
 
 
 const uri =
-  "mongodb+srv://b12a10:b12a10pass@cluster0.o1qvulf.mongodb.net/?appName=Cluster0";
+    "mongodb+srv://b12a10:b12a10pass@cluster0.o1qvulf.mongodb.net/?appName=Cluster0";
+  
+    const client = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    });
