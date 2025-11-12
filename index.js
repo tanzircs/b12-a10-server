@@ -1,3 +1,6 @@
+const dotenv = require("dotenv");
+dotenv.config();
+
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ObjectId, ServerApiVersion } = require("mongodb");
@@ -8,9 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-
-const uri =
-  "mongodb+srv://tanzir-test:lp2P7tz9TzoY82J2@cluster0.gby4cz6.mongodb.net/?appName=Cluster0";
+const uri = process.env.MONGO_URI;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -235,7 +236,6 @@ async function run() {
       }
     });
 
-
     app.get("/api/user-challenges", async (req, res) => {
       try {
         const { userId } = req.query;
@@ -458,12 +458,10 @@ async function run() {
         res.send({ ok: true, data: items[0] });
       } catch (err) {
         console.error(err);
-        res
-          .status(500)
-          .send({
-            ok: false,
-            message: "Could not fetch user challenge details",
-          });
+        res.status(500).send({
+          ok: false,
+          message: "Could not fetch user challenge details",
+        });
       }
     });
 
