@@ -467,7 +467,96 @@ async function run() {
       }
     });
 
+    app.post("/api/events", async (req, res) => {
+      try {
+        const {
+          title,
+          description,
+          date,
+          location,
+          organizer,
+          maxParticipants,
+        } = req.body;
+        if (!title || !date || !location)
+          return res
+            .status(400)
+            .send({ message: "title, date and location are required" });
+        const newEvent = {
+          title,
+          description: description || "",
+          date: new Date(date),
+          location,
+          organizer: organizer || "",
+          maxParticipants: parseInt(maxParticipants) || 0,
+          currentParticipants: 0,
+          createdAt: new Date(),
+        };
+        const result = await eventsCol.insertOne(newEvent);
+        res.send({ ok: true, insertedId: result.insertedId });
+      } catch {
+        res.status(500).send({ ok: false, message: "Could not create event" });
+      }
+    });
 
+    app.patch("/api/events/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        if (!ObjectId.isValid(id))
+          return res.status(400).send({ message: "Invalid ID" });
+        const updates = { ...req.body, updatedAt: new Date() };
+        if (updates.date) updates.date = new Date(updates.date);
+        const result = await eventsCol.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updates }
+        );
+        if (result.matchedCount === 0)
+          return res.status(404).send({ message: "Event not found" });
+        res.send({ ok: true, modifiedCount: result.modifiedCount });
+      } catch {
+        res.status(500).send({ ok: false, message: "Could not update event" });
+      }
+    });
+
+    app.delete("/api/events/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        if (!ObjectId.isValid(id))
+          return res.status(400).send({ message: "Invalid ID" });
+        const result = await eventsCol.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount === 0)
+          return res.status(404).send({ message: "Event not found" });
+        res.send({ ok: true, deletedCount: result.deletedCount });
+      } catch {
+        res.status(500).send({ ok: false, message: "Could not delete event" });
+      }
+    });
+
+    app.get("/api/stats/community", async (req, res) => {
+      try {
+        const totalChallenges = await challengesCol.countDocuments();
+        const totalParticipantsAgg = await challengesCol
+          .aggregate([
+            { $group: { _id: null, total: { $sum: "$participants" } } },
+          ])
+          .toArray();
+        const totalParticipants = totalParticipantsAgg[0]?.total || 0;
+        const impactAgg = await challengesCol
+          .aggregate([
+            { $match: { estimatedImpactValue: { $exists: true } } },
+            {
+              $group: {
+                _id: null,
+                totalImpact: { $sum: "$estimatedImpactValue" },
+              },
+            },
+          ])
+          .toArray();
+        const totalImpact = impactAgg[0]?.totalImpact || 0;
+        res.send({ ok: true, totalChallenges, totalParticipants, totalImpact });
+      } catch {
+        res.status(500).send({ ok: false, message: "Could not compute stats" });
+      }
+    });
 
     app.use("/api", (req, res) =>
       res.status(404).send({ ok: false, message: "API route not found" })
