@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db = client.db("ecoTrackDB");
     const challengesCol = db.collection("challenges");
     const userChallengesCol = db.collection("userChallenges");
@@ -235,6 +235,15 @@ async function run() {
           .send({ ok: false, message: "Could not join challenge" });
       }
     });
+
+    // app.get("/api/user-challenges", async (req, res) => {
+    //   try {
+    //     const { userId } = req.query;
+    //     if (!userId) return res.status(400).send({ message: "userId query required" });
+    //     const items = await userChallengesCol.find({ userId }).toArray();
+    //     res.send({ ok: true, data: items });
+    //   } catch { res.status(500).send({ ok: false, message: "Could not fetch user challenges" }); }
+    // });
 
     app.get("/api/user-challenges", async (req, res) => {
       try {
@@ -566,4 +575,6 @@ async function run() {
 
 run().catch(console.dir);
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+// app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+module.exports = app;
